@@ -54,8 +54,8 @@ async function onMessageHandler(ctx) {
             return await ctx.sendMessage(`No active timer`);
         }
         const stoppedTimeEntry = await TogglTrackAPI.stopTracking(currentTimer, new Date(ctx.message.date * 1000).toISOString());
-        return await ctx.sendMessage(`Stopped time entry ${JSON.stringify(stoppedTimeEntry)}`);
-    }
+        const { name } = await TogglTrackAPI.project(stoppedTimeEntry.pid)
+        return await ctx.sendMessage(`Stopped time entry for ${name}`);    }
     if (command === 'd') {
         const currentTimer = await TogglTrackAPI.currentTimer();
         if (!currentTimer) {
@@ -76,14 +76,15 @@ async function onMessageHandler(ctx) {
             pid: Number(ctx.session.pid),
             start: new Date(ctx.message.date * 1000).toISOString()
         });
-        return await ctx.sendMessage(`Started time entry ${JSON.stringify(timeEntry)}`);
+        const { name } = await TogglTrackAPI.project(timeEntry.pid)
+        return await ctx.sendMessage(`Started time entry for ${name}`);
     }
     if (command === 'p') {
         const projects = await TogglTrackAPI.projectsString()
         return await ctx.sendMessage(projects, { parse_mode: 'Markdown' });
     }
     if (command.startsWith('p')) {
-        const pid = command.slice(1)
+        const pid = Number(command.slice(1))
         const project = await TogglTrackAPI.project(pid)
         if(project) {
             ctx.session.pid = pid
