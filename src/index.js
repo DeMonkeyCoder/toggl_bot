@@ -48,6 +48,11 @@ async function onMessageHandler(ctx) {
     if(!command) {
         return
     }
+    const allowedIds = process.env.ALLOWED_IDS
+    if(allowedIds && !allowedIds.split(",").includes(String(ctx.message.from.id))) {
+        return await ctx.sendMessage('You are not allowed to use this bot. You can deploy ' +
+                'one for yourself from https://github.com/alimahdiyar/toggl_bot');
+    }
     if (command === 'e') {
         const currentTimer = await TogglTrackAPI.currentTimer();
         if (!currentTimer) {
