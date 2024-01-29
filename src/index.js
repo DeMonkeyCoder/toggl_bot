@@ -38,67 +38,26 @@ async function setup(ctx, next) {
     const title = `Processing update [${ctx.update.update_id}] from [${fromId} @${fromUsername}] with text "${action}"`;
     console.time(title);
     ctx.session = ctx.session ?? {}
+    ctx.session.dates = ctx.session.dates ?? []
     ctx.sessionId = localSession.getSessionKey(ctx);
     await next();
     console.timeEnd(title);
 }
 
 async function onMessageHandler(ctx) {
+    if(ctx.message?.forward_origin?.date) {
+        ctx.session.dates.push(ctx.message.forward_origin.date)
+    }
     const command = ctx?.message?.text
     if(!command) {
         return
     }
-    const allowedIds = process.env.ALLOWED_IDS
-    if(allowedIds && !allowedIds.split(",").includes(String(ctx.message.from.id))) {
-        return await ctx.sendMessage('You are not allowed to use this bot. You can deploy ' +
-                'one for yourself from https://github.com/alimahdiyar/toggl_bot');
+    if(command === 'c') {
+        ctx.session.dates = []
+        return
     }
-    if (command === 'e') {
-        const currentTimer = await TogglTrackAPI.currentTimer();
-        if (!currentTimer) {
-            return await ctx.sendMessage(`No active timer`);
-        }
-        const stoppedTimeEntry = await TogglTrackAPI.stopTracking(currentTimer, new Date(ctx.message.date * 1000).toISOString());
-        const { name } = await TogglTrackAPI.project(stoppedTimeEntry.pid)
-        return await ctx.sendMessage(`Stopped time entry for ${name}`);    }
-    if (command === 'd') {
-        const currentTimer = await TogglTrackAPI.currentTimer();
-        if (!currentTimer) {
-            return await ctx.sendMessage(`No active timer`);
-        }
-        await TogglTrackAPI.discardTracking(currentTimer);
-        return await ctx.sendMessage(`Discarded time entry`);
-    }
-    if (command === 's') {
-        if(!ctx.session.pid) {
-            return await ctx.sendMessage('pid not set');
-        }
-        const currentTimer = await TogglTrackAPI.currentTimer();
-        if (currentTimer) {
-            return await ctx.sendMessage(`Timer already running: ${JSON.stringify(currentTimer)}`);
-        }
-        const timeEntry = await TogglTrackAPI.startTracking({
-            pid: Number(ctx.session.pid),
-            start: new Date(ctx.message.date * 1000).toISOString()
-        });
-        const { name } = await TogglTrackAPI.project(timeEntry.pid)
-        return await ctx.sendMessage(`Started time entry for ${name}`);
-    }
-    if (command === 'p') {
-        const projects = await TogglTrackAPI.projectsString()
-        return await ctx.sendMessage(projects, { parse_mode: 'Markdown' });
-    }
-    if (command.startsWith('p')) {
-        const pid = Number(command.slice(1))
-        const project = await TogglTrackAPI.project(pid)
-        if(project) {
-            ctx.session.pid = pid
-            return await ctx.sendMessage(project.name + ' is set');
-        } else {
-            return await ctx.sendMessage('invalid id');
-        }
-    }
-    return await ctx.sendMessage('unknown command');
+    if(command === 'send')
+    ctx.sendMessage(JSON.stringify(ctx.session.dates))
 }
 
 async function catchErrorHandler(err, ctx) {
