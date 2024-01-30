@@ -30,9 +30,7 @@ const localSession = new LocalSession({
 async function setup(ctx, next) {
     const update = ctx.update;
     const message = update.message;
-    let action = message ? `text:${message.text}` : null;
-    action ??= "<empty>";
-    action = action.slice(0, 30);
+    const action = message ? `text:${message.text}`.slice(0, 30) : "<empty>";
     const fromId = message?.from.id || "-";
     const fromUsername = message?.from.username || "-";
     const title = `Processing update [${ctx.update.update_id}] from [${fromId} @${fromUsername}] with text "${action}"`;
