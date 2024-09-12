@@ -58,6 +58,15 @@ async function onMessageHandler(ctx) {
     }
     if(command === 'send')
     ctx.sendMessage(JSON.stringify(ctx.session.dates))
+    if(ctx.session.dates.length % 2 === 0) {
+        const totalTime = ctx.session.dates.slice().sort().reduce((a,c,i) => a + (i%2===0?(-1):1)* c,0)
+        const hours = Math.floor(totalTime / 3600).toString().padStart(2, '0');
+        const minutes = Math.floor((totalTime % 3600) / 60).toString().padStart(2, '0');
+        const seconds = (totalTime % 60).toString().padStart(2, '0');
+        ctx.sendMessage(`${totalTime} ${hours}:${minutes}:${seconds}`)
+    } else {
+        ctx.sendMessage("Something went wrong... ctx.session.dates.length % 2 !== 0")
+    }
 }
 
 async function catchErrorHandler(err, ctx) {
